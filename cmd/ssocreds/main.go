@@ -59,9 +59,7 @@ func main() {
 	if force {
 		awsCredFile := filepath.Join(utils.HomeDir(), awsCredPath)
 		err := os.Rename(awsCredFile, filepath.Join(utils.HomeDir(), ".aws", "old.credentials.backup"))
-		if os.IsNotExist(err) {
-			log.Printf("WARN: no credentials file found at %s, nothing to clean up", awsCredFile)
-		} else if err != nil {
+		if err != nil && !os.IsNotExist(err) {
 			log.Fatal(err)
 		}
 	}
