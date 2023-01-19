@@ -22,27 +22,19 @@ type SsoAccessData struct {
 	awsProfile, accessKeyId, secretAccessKey, sessionToken string
 }
 
-var allowedFormats = []string{
-	"env",
-	"json",
-}
-
 const (
 	defaultFormat = "env"
 	awsCredPath   = ".aws/credentials"
 )
 
 func main() {
-	var formatPtr = flag.String("format", defaultFormat, fmt.Sprintf("Output format, one of (%v)", allowedFormats))
 	var profilePtr = flag.String("profile", "", "Profile to use, same value as passed to AWS CLI --profile")
 	var forcePtr = flag.Bool("force", false, "Force cleanup of old credentials and setting of AWS_PROFILE")
+	var jsonPtr = flag.Bool("json", false, "Use JSON output instead of environment variables")
 
 	flag.Parse()
 
-	format := *formatPtr
-	if !utils.Contains(allowedFormats, format) {
-		log.Fatalf("invalid format: %s (allowed formats: %v)", format, allowedFormats)
-	}
+	isJson := *jsonPtr
 
 	var profile string
 	if *profilePtr != "" {
@@ -100,15 +92,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	switch format {
-	case "env":
-		printEnv(accessData, force)
-	case "json":
+	if isJson {
 		printJson(accessData)
-	default:
-		log.Panicf("invalid format: %s,", format)
+	} else {
+		printEnv(accessData, force)
 	}
-
 }
 
 func printEnv(accessData SsoAccessData, force bool) {
