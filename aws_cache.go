@@ -58,25 +58,25 @@ func awsSsoCaches(caches []map[string]string) []*awsSsoCahce {
 		startUrl, ok := c["startUrl"]
 
 		if !ok {
-			break
+			continue
 		}
 
 		accessToken, ok := c["accessToken"]
 
 		if !ok {
-			break
+			continue
 		}
 
 		region, ok := c["region"]
 
 		if !ok {
-			break
+			continue
 		}
 
 		expiresAt, ok := c["expiresAt"]
 
 		if !ok {
-			break
+			continue
 		}
 
 		t, err := time.Parse(time.RFC3339, expiresAt)
