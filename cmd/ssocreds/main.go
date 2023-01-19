@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/winebarrel/ssocreds"
@@ -24,11 +25,13 @@ var allowedFormats = []string{
 
 const (
 	defaultFormat = "env"
+	awsCredPath   = ".aws/credentials"
 )
 
 func main() {
 	var formatPtr = flag.String("format", defaultFormat, fmt.Sprintf("Output format, one of (%v)", allowedFormats))
 	var profilePtr = flag.String("profile", "", "Profile to use, same value as passed to AWS CLI --profile")
+	var forcePtr = flag.Bool("force", false, "Force cleanup of old credentials")
 
 	flag.Parse()
 
@@ -46,6 +49,17 @@ func main() {
 
 	if profile == "" {
 		log.Fatal("AWS_PROFILE is not set and no profile passed as --profile")
+	}
+
+	force := *forcePtr
+	if force {
+		awsCredFile := filepath.Join(utils.HomeDir(), awsCredPath)
+		err := os.Rename(awsCredFile, filepath.Join(utils.HomeDir(), ".aws", "old.credentials.backup"))
+		if os.IsNotExist(err) {
+			log.Printf("WARN: no credentials file found at %s, nothing to clean up", awsCredFile)
+		} else if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	startUrl, err := ssocreds.SsoStartUrl(profile)
