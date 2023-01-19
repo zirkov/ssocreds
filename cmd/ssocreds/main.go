@@ -60,7 +60,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(profile))
 
 	if err != nil {
 		log.Fatal(err)
