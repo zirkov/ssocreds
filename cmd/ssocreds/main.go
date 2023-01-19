@@ -18,6 +18,10 @@ func init() {
 	log.SetFlags(0)
 }
 
+type SsoAccessData struct {
+	awsProfile, accessKeyId, secretAccessKey, sessionToken string
+}
+
 var allowedFormats = []string{
 	"env",
 	"json",
@@ -31,7 +35,7 @@ const (
 func main() {
 	var formatPtr = flag.String("format", defaultFormat, fmt.Sprintf("Output format, one of (%v)", allowedFormats))
 	var profilePtr = flag.String("profile", "", "Profile to use, same value as passed to AWS CLI --profile")
-	var forcePtr = flag.Bool("force", false, "Force cleanup of old credentials")
+	var forcePtr = flag.Bool("force", false, "Force cleanup of old credentials and setting of AWS_PROFILE")
 
 	flag.Parse()
 
@@ -86,7 +90,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	accessKeyId, secretAccessKey, sessionToken, err := ssocreds.SsoCredentials(cfg, account, permissionSet, accessToken, region)
+	var accessData = SsoAccessData{}
+	if force {
+		accessData.awsProfile = profile
+	}
+
+	accessData.accessKeyId, accessData.secretAccessKey, accessData.sessionToken, err =
+		ssocreds.SsoCredentials(cfg, account, permissionSet, accessToken, region)
 
 	if err != nil {
 		log.Fatal(err)
@@ -94,26 +104,29 @@ func main() {
 
 	switch format {
 	case "env":
-		printEnv(accessKeyId, secretAccessKey, sessionToken)
+		printEnv(accessData, force)
 	case "json":
-		printJson(accessKeyId, secretAccessKey, sessionToken)
+		printJson(accessData)
 	default:
 		log.Panicf("invalid format: %s,", format)
 	}
 
 }
 
-func printEnv(accessKeyId, secretAccessKey, sessionToken string) {
-	fmt.Printf("export AWS_ACCESS_KEY_ID='%s'\n", accessKeyId)
-	fmt.Printf("export AWS_SECRET_ACCESS_KEY='%s'\n", secretAccessKey)
-	fmt.Printf("export AWS_SESSION_TOKEN='%s'\n", sessionToken)
+func printEnv(accessData SsoAccessData, force bool) {
+	if force {
+		fmt.Printf("export AWS_PROFILE='%s'\n", accessData.awsProfile)
+	}
+	fmt.Printf("export AWS_ACCESS_KEY_ID='%s'\n", accessData.accessKeyId)
+	fmt.Printf("export AWS_SECRET_ACCESS_KEY='%s'\n", accessData.secretAccessKey)
+	fmt.Printf("export AWS_SESSION_TOKEN='%s'\n", accessData.sessionToken)
 }
 
-func printJson(accessKeyId, secretAccessKey, sessionToken string) {
+func printJson(accessData SsoAccessData) {
 	creds := map[string]string{
-		"accessKeyId":     accessKeyId,
-		"secretAccessKey": secretAccessKey,
-		"sessionToken":    sessionToken,
+		"accessKeyId":     accessData.accessKeyId,
+		"secretAccessKey": accessData.secretAccessKey,
+		"sessionToken":    accessData.sessionToken,
 	}
 
 	output, _ := json.MarshalIndent(creds, "", "  ")
