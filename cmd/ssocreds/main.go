@@ -23,7 +23,6 @@ type SsoAccessData struct {
 }
 
 const (
-	defaultFormat = "env"
 	awsCredPath   = ".aws/credentials"
 )
 
