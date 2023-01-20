@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -26,22 +27,25 @@ const (
 )
 
 func main() {
-	format := defaultFormat
+	var formatPtr = flag.String("format", defaultFormat, fmt.Sprintf("Output format, one of (%v)", allowedFormats))
+	var profilePtr = flag.String("profile", "", "Profile to use, same value as passed to AWS CLI --profile")
 
-	if len(os.Args) > 2 {
-		log.Fatalf("invalid arguments: %v", os.Args[1:])
-	} else if len(os.Args) == 2 {
-		format = os.Args[1]
+	flag.Parse()
 
-		if !utils.Contains(allowedFormats, format) {
-			log.Fatalf("invalid format: %s (allowed formats: %v)", format, allowedFormats)
-		}
+	format := *formatPtr
+	if !utils.Contains(allowedFormats, format) {
+		log.Fatalf("invalid format: %s (allowed formats: %v)", format, allowedFormats)
 	}
 
-	profile := os.Getenv("AWS_PROFILE")
+	var profile string
+	if *profilePtr != "" {
+		profile = *profilePtr
+	} else {
+		profile = os.Getenv("AWS_PROFILE")
+	}
 
 	if profile == "" {
-		log.Fatal("AWS_PROFILE is not set")
+		log.Fatal("AWS_PROFILE is not set and no profile passed as --profile")
 	}
 
 	startUrl, err := ssocreds.SsoStartUrl(profile)
@@ -56,7 +60,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(profile))
 
 	if err != nil {
 		log.Fatal(err)
