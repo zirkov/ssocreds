@@ -13,23 +13,32 @@ brew install winebarrel/ssocreds/ssocreds
 ```
 
 ## Usage
-
 ```
 $ export AWS_PROFILE=my-profile
 $ aws sso login
-
 $ ssocreds
+```
+OR 
+```
+$ aws sso login --profile=my-profile
+$ ssocreds --profile=my-profile
+```
+Output
+```
 export AWS_ACCESS_KEY_ID='ASIA*************'
 export AWS_SECRET_ACCESS_KEY='**********************************'
 export AWS_SESSION_TOKEN='****************************************'
-
-$ ssocreds json
+```
+```
+$ ssocreds --json
 {
   "accessKeyId": "ASIA*************",
   "secretAccessKey": "**********************************',
   "sessionToken": "****************************************"
 }
-
+```
+To update the environment directly
+```
 $ eval $(ssocreds)
 $ ... # Run any command that do not support AWS SSO
 ```
